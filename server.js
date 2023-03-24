@@ -14,17 +14,18 @@ app.use(express.json());
 let users = [];
 
 app.get('/', (req, res) => {
-    res.send("Server running");
+    res.send("Server runnsing");
 });
-io.on('connection', socket => {
+io.on("connection", socket => {
+
     console.log(socket.id + ' connected');
     socket.on('connectUser', userData => {
         const index = users.findIndex((e) => e.username === userData.username);
         if (index == -1) {
             users.push(userData);
-            socket.userName = userData.username;
+            socket.userName = userData.userName;
             socket.join(userData.username);
-            console.log(userData.username + " user registered the name room");
+            console.log(userData.username + " user registered on the name room 1");
             socket.emit('user-registered', userData);
             io.emit('users', users);
         } else {
@@ -81,8 +82,24 @@ io.on('connection', socket => {
         users = users.filter(
             user => user.username !== socket.userName
         );
+
         io.emit('users', users);
     });
+    
+    socket.on("update-user", updateData => {
+        // remove user from active users
+        console.log("user is offline", users);
+        // console.log("user is offline", name);
+        users.map((user)=>{
+            console.log(user.username)
+            if (user.username == updateData.userName) {
+                user.active = updateData.status;
+            }
+        })
+        console.log("user is offline", users);
+        // send all online users to all users
+        io.emit("users", users);
+    });   
 });
 
-server.listen(PORT, () => console.log("Server running on port " + PORT));
+server.listen(PORT, () => console.log("Server running on port " + PORT)); 
