@@ -35,71 +35,59 @@ io.on("connection", socket => {
 
     socket.on('call-user', data => {
         console.log("Call User --> from:" + data.from.username + "   to:" + data.to.username);
-        /// SDP
-        /// TO
-        /// FROM
         io.to(data.to.username).emit('call-made', data);
     });
 
     socket.on('make-answer', data => {
         console.log("Make Answer --> from:" + data.from.username + "   to:" + data.to.username);
-        /// SDP
-        /// TO
-        /// FROM
         io.to(data.to.username).emit('answer-made', data);
     });
 
     socket.on('ice-candidate', data => {
         console.log("Ice Candidate --> from:" + data.from.username + "   to:" + data.to.username);
-        /// CANDIDATE
-        /// SDPMID
-        /// SDPMLINEINDEX
-        /// TO
-        /// FROM
         io.to(data.to.username).emit('ice-candidate', data);
     });
 
     socket.on('hangup', data => {
         console.log("Hangup --> from:" + data.from.username + "   to:" + data.to.username);
-        /// SDP
-        /// TO
-        /// FROM
         io.to(data.to.username).emit('hangup', data);
         io.to(data.from.username).emit('hangup', data);
     });
 
     socket.on('busy', data => {
         console.log("Hangup --> from:" + data.from.username + "   to:" + data.to.username);
-        /// SDP
-        /// TO
-        /// FROM
         io.to(data.to.username).emit('busy', data);
         io.to(data.from.username).emit('busy', data);
     });
 
-    socket.on('disconnect', () => {
-        console.log(socket.userName + ' disconnected');
-        users = users.filter(
-            user => user.username !== socket.userName
-        );
-
-        io.emit('users', users);
-    });
     
     socket.on("update-user", updateData => {
-        // remove user from active users
-        console.log("user is offline", users);
-        // console.log("user is offline", name);
         users.map((user)=>{
             console.log(user.username)
             if (user.username == updateData.userName) {
                 user.active = updateData.status;
             }
         })
-        console.log("user is offline", users);
-        // send all online users to all users
-        io.emit("users", users);
-    });   
+        io.emit("users", users.filter(user => user.active === true));
+    });
+
+    socket.on("user-in-call", updateData => {
+        users.map((user)=>{
+            console.log(user.username)
+            if (user.username == updateData.userName) {
+                user.incall = updateData.callStatus;
+            }
+        })
+        io.emit("users", users.filter(user => user.active === true && user.incall === false));
+    });
+    
+    socket.on('disconnect', () => {
+        console.log(socket.userName + ' disconnected');
+        users = users.filter(
+            user => user.username !== socket.userName
+        );
+        io.emit('users', users);
+    });
 });
 
 server.listen(PORT, () => console.log("Server running on port " + PORT)); 
